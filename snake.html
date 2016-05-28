@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>SnaKe by Kapil Zad - HTML5 Canvas Demonstration</title>
+	<style>
+	body { font-family:verdana; margin:10px;}
+	button{ font-size:18pt; background-color:white; width:100px; cursor:hand; }
+	button:hover { background-color:orange;}
+	span{ display:block; font-size:10pt; color: yellow; }
+	output{ color: white; font-size:18pt; border: 1px solid gray; text-align: right; display:block; margin-left:0px}
+	</style>
+</head>
+<body style="background-color: black; margin-left:50px;">
+
+<div style="width: 800px; display:block;">
+	<canvas id="myCanvas" width="600" height="600" style="border:2px solid gray; background-color:gainsboro; float:left;">
+	Your browser does not support the HTML5 canvas tag.
+	</canvas>
+
+	<div style="float:left; padding-left:10px; padding-right:10px;">
+		<button id="playbtn" style="" onclick="playpause()">Play</button>
+		<span>LIFE</span>
+		<output id="currentLife">1</output>
+		<span>LEVEL</span>
+		<output id="currentStage">1</output>
+		<span>SCORE</span>
+		<output id="currentScore">0</output>
+		<br/>
+		<span style="color: gainsboro; font-size:8pt">SnaKe</span>
+		<span style="color: gainsboro; font-size:8pt">by Kapil Zad</span>
+		<table style="display:inline">
+		<tr>
+			<td></td>
+			<td><button id="btnUp" style="width:50px; height:50px" onclick="turnUp()">^</button></td>			
+			<td></td>
+		</tr>
+		<tr>
+			<td><button id="btnLeft" style="width:50px; height:50px" onclick="turnLeft()">&lt;</button></td>
+			<td></td>
+			<td><button id="btnRight" style="width:50px; height:50px" onclick="turnRight()">&gt;</button></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td><button id="btnDown" style="width:50px; height:50px" onclick="turnDown()">v</button></td>			
+			<td></td>
+		</tr>
+		</table>
+	</div>
+</div>
+
+
+<audio id="crashaudio" type="audio/wav" src="crash.wav">Your browser does not support the audio element.</audio>
+<audio id="wrongturnaudio" type="audio/mpeg" src="btn402.mp3">Your browser does not support the audio element.</audio>
+
+<script>
+window.requestAnimFrame = function(){
+    return (
+        window.requestAnimationFrame       || 
+        window.webkitRequestAnimationFrame || 
+        window.mozRequestAnimationFrame    || 
+        window.oRequestAnimationFrame      || 
+        window.msRequestAnimationFrame     || 
+        function(/* function */ callback){
+            window.setTimeout(callback, 1000 / 60);
+        }
+    );
+}();
+
+
+////////////////////////////////////////////////////////////////
+
+wallcells1 = [
+	{x:60,y:60}, {x:80,y:60}, {x:100,y:60}, {x:120,y:60}, {x:140,y:60}, {x:160,y:60}, {x:60,y:80}, {x:60,y:100}, {x:60,y:120}, {x:60,y:140}, {x:60,y:160}, {x:60,y:180}, {x:160,y:140}, {x:160,y:160}, {x:160,y:180}, {x:160,y:200}, {x:160,y:220}, {x:160,y:240}, {x:160,y:260}, {x:140,y:260}, {x:120,y:260}, {x:100,y:260}, {x:80,y:260}, {x:240,y:60}, {x:240,y:100}, {x:240,y:120}, {x:240,y:140}, {x:260,y:160}, {x:240,y:160}, {x:280,y:160}, {x:300,y:160}, {x:320,y:160}, {x:340,y:160}, {x:360,y:160}, {x:380,y:160}, {x:400,y:160}, {x:400,y:180}, {x:400,y:200}, {x:400,y:220}, {x:400,y:240}, {x:400,y:260}, {x:400,y:280}, {x:240,y:80}, {x:240,y:240}, {x:240,y:260}, {x:240,y:280}, {x:240,y:300}, {x:240,y:320}, {x:240,y:340}, {x:260,y:340}, {x:280,y:340}, {x:300,y:340}, {x:320,y:340}, {x:320,y:360}, {x:320,y:380}, {x:320,y:400}, {x:320,y:420}, {x:320,y:440}, {x:340,y:440}, {x:360,y:440}, {x:380,y:440}, {x:400,y:440}, {x:420,y:440}, {x:440,y:40}, {x:460,y:40}, {x:480,y:40}, {x:500,y:40}, {x:520,y:40}, {x:520,y:60}, {x:520,y:80}, {x:520,y:100}, {x:520,y:120}, {x:540,y:140}, {x:560,y:160}, {x:580,y:180}, {x:400,y:380}, {x:440,y:380}, {x:480,y:380}, {x:520,y:380}, {x:520,y:340}, {x:520,y:300}, {x:520,y:260}, {x:480,y:220}, {x:500,y:240}, {x:0,y:500}, {x:20,y:520}, {x:40,y:540}, {x:60,y:560}, {x:80,y:580}, {x:80,y:440}, {x:120,y:400}, {x:160,y:440}, {x:120,y:480}, {x:180,y:440}, {x:120,y:380}, {x:60,y:440}, {x:120,y:500}, {x:220,y:520}, {x:240,y:500}, {x:260,y:520}, {x:240,y:540}, {x:240,y:520}, {x:480,y:500}, {x:500,y:500}, {x:460,y:520}, {x:480,y:540}, {x:500,y:540}, {x:520,y:520}, {x:360,y:520}, {x:380,y:500}, {x:380,y:540}, {x:400,y:520}, {x:380,y:520}, {x:340,y:80}, {x:340,y:60}, {x:360,y:80}, {x:320,y:80}, {x:340,y:100}
+];
+foodcells1= [
+	{x:200,y:40}, {x:560,y:100}, {x:480,y:340}, {x:120,y:340}, {x:260,y:440}, {x:0,y:380}//, {x:160,y:560}, {x:300,y:280}, {x:100,y:140}, {x:560,y:520}, {x:440,y:480}, {x:460,y:100}
+];
+
+wallcells2 = [
+	{x:100,y:120}, {x:120,y:120}, {x:140,y:120}, {x:160,y:120}, {x:180,y:120}, {x:140,y:140}, {x:140,y:180}, {x:140,y:200}, {x:140,y:220}, {x:100,y:220}, {x:120,y:220}, {x:160,y:220}, {x:180,y:220}, {x:260,y:180}, {x:260,y:200}, {x:260,y:220}, {x:260,y:260}, {x:260,y:280}, {x:280,y:220}, {x:300,y:220}, {x:320,y:260}, {x:340,y:260}, {x:360,y:260}, {x:380,y:260}, {x:380,y:240}, {x:380,y:280}, {x:380,y:300}, {x:380,y:220}, {x:260,y:160}, {x:380,y:200}, {x:380,y:320}, {x:60,y:380}, {x:80,y:380}, {x:120,y:380}, {x:140,y:380}, {x:160,y:380}, {x:180,y:380}, {x:180,y:400}, {x:180,y:420}, {x:180,y:480}, {x:180,y:500}, {x:160,y:500}, {x:140,y:500}, {x:120,y:500}, {x:80,y:500}, {x:60,y:500}, {x:40,y:400}, {x:40,y:420}, {x:40,y:480}, {x:360,y:440}, {x:360,y:460}, {x:360,y:480}, {x:360,y:420}, {x:380,y:420}, {x:380,y:440}, {x:380,y:460}, {x:380,y:480}, {x:400,y:420}, {x:420,y:420}, {x:440,y:420}, {x:400,y:440}, {x:420,y:440}, {x:440,y:440}, {x:360,y:500}, {x:380,y:500}, {x:480,y:360}, {x:480,y:340}, {x:480,y:320}, {x:500,y:320}, {x:500,y:340}, {x:500,y:360}, {x:480,y:300}, {x:480,y:280}, {x:500,y:280}, {x:500,y:300}, {x:520,y:300}, {x:520,y:280}, {x:540,y:280}, {x:540,y:300}, {x:560,y:300}, {x:560,y:280}, {x:560,y:260}, {x:540,y:260}, {x:540,y:240}, {x:560,y:240}, {x:560,y:220}, {x:540,y:220}, {x:380,y:60}, {x:380,y:80}, {x:400,y:60}, {x:420,y:60}, {x:440,y:60}, {x:460,y:60}, {x:480,y:60}, {x:500,y:60}, {x:500,y:80}, {x:380,y:100}, {x:400,y:100}, {x:420,y:100}, {x:440,y:100}, {x:460,y:100}, {x:480,y:100}, {x:500,y:100}, {x:340,y:280}, {x:360,y:280}, {x:360,y:300}, {x:280,y:200}, {x:100,y:240}, {x:120,y:240}, {x:140,y:240}, {x:160,y:240}, {x:180,y:240}, {x:160,y:180}, {x:160,y:200}, {x:120,y:140}, {x:80,y:100}, {x:80,y:120}
+];
+foodcells2= [
+{x:260,y:140}, {x:140,y:320}, {x:120,y:440}, {x:460,y:400}, {x:340,y:200}, {x:60,y:180}, {x:320,y:340}, {x:180,y:60}, {x:540,y:80}, {x:0,y:340}
+];
+
+wallcells3= [
+{x:0,y:140}, {x:20,y:140}, {x:40,y:120}, {x:60,y:100}, {x:80,y:80}, {x:100,y:80}, {x:120,y:80}, {x:140,y:80}, {x:140,y:100}, {x:140,y:120}, {x:140,y:140}, {x:160,y:140}, {x:180,y:140}, {x:200,y:140}, {x:200,y:160}, {x:200,y:180}, {x:200,y:200}, {x:180,y:200}, {x:160,y:200}, {x:140,y:200}, {x:0,y:220}, {x:20,y:220}, {x:40,y:220}, {x:60,y:220}, {x:80,y:220}, {x:80,y:240}, {x:80,y:260}, {x:60,y:240}, {x:40,y:240}, {x:60,y:260}, {x:80,y:280}, {x:340,y:140}, {x:360,y:120}, {x:380,y:100}, {x:400,y:80}, {x:420,y:60}, {x:440,y:40}, {x:500,y:80}, {x:480,y:100}, {x:460,y:120}, {x:440,y:140}, {x:440,y:160}, {x:460,y:160}, {x:460,y:140}, {x:480,y:120}, {x:500,y:100}, {x:480,y:140}, {x:500,y:140}, {x:500,y:120}, {x:520,y:100}, {x:520,y:80}, {x:540,y:80}, {x:420,y:160}, {x:420,y:200}, {x:440,y:200}, {x:460,y:200}, {x:440,y:220}, {x:460,y:220}, {x:480,y:220}, {x:460,y:240}, {x:480,y:240}, {x:500,y:240}, {x:480,y:260}, {x:500,y:260}, {x:520,y:260}, {x:500,y:280}, {x:520,y:280}, {x:540,y:280}, {x:380,y:360}, {x:380,y:340}, {x:380,y:320}, {x:400,y:320}, {x:420,y:320}, {x:420,y:340}, {x:420,y:360}, {x:420,y:380}, {x:420,y:400}, {x:420,y:420}, {x:420,y:440}, {x:380,y:380}, {x:380,y:400}, {x:380,y:420}, {x:380,y:440}, {x:400,y:440}, {x:80,y:400}, {x:100,y:400}, {x:100,y:380}, {x:100,y:420}, {x:120,y:400}, {x:180,y:480}, {x:200,y:460}, {x:220,y:440}, {x:220,y:460}, {x:220,y:480}, {x:200,y:480}, {x:260,y:360}, {x:260,y:340}, {x:240,y:360}, {x:280,y:360}, {x:260,y:380}, {x:480,y:400}, {x:540,y:400}, {x:520,y:420}, {x:500,y:420}, {x:480,y:460}, {x:500,y:440}, {x:520,y:440}, {x:540,y:460}, {x:300,y:540}, {x:300,y:520}, {x:320,y:520}, {x:340,y:520}, {x:360,y:520}, {x:360,y:540}, {x:380,y:540}, {x:400,y:540}, {x:420,y:540}, {x:440,y:540}, {x:460,y:540}, {x:460,y:560}, {x:440,y:560}, {x:420,y:560}, {x:400,y:560}, {x:380,y:560}, {x:340,y:560}, {x:300,y:560}, {x:320,y:560}, {x:360,y:560}, {x:40,y:540}, {x:40,y:520}, {x:60,y:540}, {x:20,y:540}, {x:40,y:560}, {x:140,y:520}, {x:120,y:520}, {x:140,y:500}, {x:140,y:540}, {x:160,y:520}, {x:160,y:300}, {x:160,y:280}, {x:180,y:280}, {x:200,y:280}, {x:220,y:280}, {x:160,y:320}, {x:160,y:340}, {x:360,y:220}, {x:360,y:240}, {x:360,y:260}, {x:360,y:280}, {x:340,y:280}, {x:320,y:280}, {x:300,y:280}, {x:240,y:60}, {x:260,y:60}, {x:280,y:60}, {x:300,y:60}, {x:320,y:60}, {x:320,y:80}, {x:300,y:100}, {x:280,y:120}, {x:260,y:100}, {x:240,y:80}, {x:220,y:60}, {x:340,y:60}, {x:540,y:0}, {x:560,y:20}, {x:580,y:40}, {x:540,y:540}, {x:540,y:520}, {x:560,y:540}, {x:540,y:180}, {x:560,y:160}, {x:560,y:200}
+];
+foodcells3= [
+{x:220,y:120}, {x:420,y:180}, {x:380,y:40}, {x:240,y:320}, {x:160,y:420}, {x:120,y:240}, {x:80,y:520}, {x:40,y:40}, {x:400,y:280}, {x:580,y:180}
+];
+////////////////////////////////////////////////////////////////
+
+var direction = 'right';
+var speedRank = 130; // higher value means faster worm
+var lastUpdated;
+var stage= 1;
+var score=0;
+var lives=3;
+var POINTS=100;
+var stop = true;
+var currFoodCount = 0;
+var currFoodCell = {x:-1, y:-1};
+var TOTALSTAGES = 3;
+var wallCells;
+var foodCells;
+var wormCells;
+
+var bgaudio = document.getElementById('bgaudio');
+var crashaudio = document.getElementById('crashaudio');
+var wrongturnaudio = document.getElementById('wrongturnaudio');
+var currStage = document.getElementById('currentStage');
+var currScore = document.getElementById('currentScore');
+var currLife = document.getElementById('currentLife');
+var cellSize = 20;
+var cellSizeHalf = cellSize/2;
+
+var wormCellsInitial = [
+	{x:80,y:0}, {x:60,y:0}, {x:40,y:0}, {x:20,y:0}, {x:0,y:0}
+];
+
+
+////////////////////////////////////////////////////////////////
+
+function drawGrid(canvas){
+	var context = canvas.getContext("2d");
+	
+	for(var x=0; x<canvas.width; x=x+cellSize)
+	{
+		for(var y=0; y<canvas.height; y=y+cellSize)
+		{
+			drawGridCell(context, x, y);
+		}
+	}
+}
+
+function drawGridCell(context, x, y){
+	var centerX = cellSizeHalf + x;
+	var centerY = cellSizeHalf + y;
+	var radius = 1;
+	
+	context.beginPath();
+	context.rect(x, y, cellSize, cellSize);
+	// create radial gradient
+	var grd1 = context.createRadialGradient(centerX, centerY, 2, centerX, centerY, cellSize);
+	grd1.addColorStop(0, 'lightgray');
+	grd1.addColorStop(1, 'white');
+	context.fillStyle = grd1;
+	context.fill();
+	context.lineWidth = 1;
+	context.strokeStyle = 'silver';
+	context.stroke();
+	
+	context.beginPath();
+	context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+	context.fillStyle = 'silver';
+	context.fill();
+	context.lineWidth = 4;
+	context.strokeStyle = 'silver';
+	context.stroke(); 
+}
+
+function drawGridCellVisited(context, x, y){
+	var centerX = cellSizeHalf + x;
+	var centerY = cellSizeHalf + y;
+	var radius = 1;
+	
+	context.beginPath();
+	context.rect(x, y, cellSize, cellSize);
+	// create radial gradient
+	var grd1 = context.createRadialGradient(centerX, centerY, 2, centerX, centerY, cellSize);
+	grd1.addColorStop(0, 'lightgray');
+	grd1.addColorStop(1, 'white');
+	context.fillStyle = grd1;
+	context.fill();
+	context.lineWidth = 1;
+	context.strokeStyle = 'silver';
+	context.stroke();
+}
+
+function drawWallCell(context, x, y){
+	var centerX = cellSizeHalf + x;
+	var centerY = cellSizeHalf + y;
+	var radius = cellSizeHalf - 2;
+
+	context.beginPath();
+	context.rect(x, y, cellSize, cellSize);
+	// create radial gradient
+	//var grd1 = context.createRadialGradient(centerX, centerY, 2, centerX, centerY, radius+8);
+	//grd1.addColorStop(0, 'midnightblue');
+	//grd1.addColorStop(1, 'lightgray');
+	
+	// add linear gradient
+	var grd1 = context.createLinearGradient(x, y, x+cellSize, y+cellSize);
+	grd1.addColorStop(0, 'cornflowerblue');   //'#8ED6FF'
+	grd1.addColorStop(1, 'cyan');  //'#004CB3'	
+	context.fillStyle = grd1;
+	context.fill();	
+	context.lineWidth = 1;
+	context.strokeStyle = 'gray';
+	context.stroke();
+}
+
+function drawWalls(canvas, wallcells){
+	var context = canvas.getContext("2d");
+	
+	for(var i=0; i<wallcells.length; i++)
+	{
+		drawWallCell(context, wallcells[i].x, wallcells[i].y);
+	}
+}
+
+function drawFoods(canvas, foodcells){
+	var context = canvas.getContext("2d");
+	
+	for(var i=0; i<foodcells.length; i++)
+	{
+		drawFoodCell(context, foodcells[i].x, foodcells[i].y);
+	}
+}
+
+function getNextFood(canvas){
+	var context = canvas.getContext("2d");
+	
+	if(currFoodCount < foodCells.length)
+	{
+		currFoodCell = foodCells[currFoodCount];
+		drawFoodCell(context, currFoodCell.x, currFoodCell.y);
+		currFoodCount++;
+	}
+	else
+	{
+		stop = true;
+		bgaudio.pause();
+		
+		// proceed to next stage
+		stage++;
+		if(stage > TOTALSTAGES)
+		{
+			alert("You are winner!");
+			document.getElementById("playbtn").innerHTML = 'New';
+		}
+		else
+		{			
+			alert("Stage Cleared!");
+			document.getElementById("playbtn").innerHTML = 'Play';
+			speedRank = speedRank-5;
+			initStage(canvas);
+		}
+	}
+}
+
+function drawFoodCell(context, x, y){
+	var centerX = cellSizeHalf + x;
+	var centerY = cellSizeHalf + y;
+	var radius = cellSizeHalf;
+
+	context.beginPath();
+	var grd1 = context.createRadialGradient(centerX, centerY, 1, centerX, centerY, radius);
+	grd1.addColorStop(0, 'orangered');
+	grd1.addColorStop(1, 'greenyellow');
+	context.arc(centerX, centerY, radius-4, 0, 2 * Math.PI, false);
+	context.fillStyle = grd1;
+	context.fill();
+	context.lineWidth = 4;
+	context.strokeStyle = 'orangered';
+	context.stroke(); 
+}
+////////////////////////////////////////////////////////////////
+
+function drawWorm(canvas){
+	var context = canvas.getContext("2d");
+	var radius = cellSizeHalf-2;
+	
+	/*context.lineWidth = 10;
+	context.strokeStyle = 'turquoise';
+	context.lineCap = 'round';
+	context.lineJoin = 'round';
+	context.beginPath();
+	context.moveTo(wormCells[0].x + cellSizeHalf, wormCells[0].y + cellSizeHalf);
+	for(var i=1; i<wormCells.length-1; i++)
+	{		
+		context.lineTo(wormCells[i].x + cellSizeHalf, wormCells[i].y + cellSizeHalf);
+	}
+	context.stroke();*/
+	
+	for(var i=0; i<wormCells.length; i++)
+	{
+		if(i == 0 || i== 1)
+			drawWormCell(context, wormCells[i].x, wormCells[i].y, radius);
+		else if(i == 2 || i== 3)
+			drawWormCell(context, wormCells[i].x, wormCells[i].y, radius-1);
+		else
+			drawWormCell(context, wormCells[i].x, wormCells[i].y, radius-2);
+	}
+}
+
+function drawWormCell(context, x, y, radius){
+	var centerX = cellSizeHalf + x;
+	var centerY = cellSizeHalf + y;
+	
+	context.beginPath();
+	context.rect(x, y, cellSize, cellSize);
+	// create radial gradient
+	var grd1 = context.createRadialGradient(centerX, centerY, 2, centerX, centerY, cellSize);
+	grd1.addColorStop(0, 'lightgray');
+	grd1.addColorStop(1, 'white');
+	context.fillStyle = grd1;
+	context.fill();
+	context.lineWidth = 1;
+	context.strokeStyle = 'silver';
+	context.stroke();
+
+	context.beginPath();
+	context.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+	// create radial gradient
+	var grd1 = context.createRadialGradient(centerX, centerY, 1, centerX, centerY, radius);
+	grd1.addColorStop(0, 'cyan');
+	grd1.addColorStop(1, 'green');
+	context.fillStyle = grd1;
+	context.fill();
+	
+}
+
+function crashAnim(context, x, y)
+{
+	var x1 = x;
+	var y1 = y;
+	
+	var x2 = x + cellSizeHalf;
+	var y2 = y;
+	
+	var x3 = x;
+	var y3 = y + cellSizeHalf;
+	
+	var x4 = x + cellSizeHalf;
+	var y4 = y + cellSizeHalf;
+	//////////////////////////
+	//var parts = [{x,y}, {x + cellSizeHalf, y}, {x, y + cellSizeHalf}, {x + cellSizeHalf, y + cellSizeHalf}];
+	
+	var radius = cellSizeHalf-2;
+	
+	context.fillStyle="black";
+
+	for(var i=0; i<20; i++)	
+	{
+		x1--; y1--;		
+		context.fillRect(x1, y1, cellSizeHalf, cellSizeHalf);
+		
+		x2++; y2--;		
+		context.fillRect(x2, y2, cellSizeHalf, cellSizeHalf);
+		
+		x3--; y3++;		
+		context.fillRect(x3, y3, cellSizeHalf, cellSizeHalf);
+		
+		x4++; y4++;		
+		context.fillRect(x4, y4, cellSizeHalf, cellSizeHalf);
+		
+		drawWormCell(context, x, y, radius);
+	}
+}
+
+function updateWorm(canvas)
+{
+	var context = canvas.getContext("2d");
+	
+	var currHead = wormCells[0];
+	var newHeadX;
+	var newHeadY;
+	
+	switch(direction)
+	{
+	case 'up':
+		newHeadX = currHead.x;
+		if(currHead.y == 0)
+			newHeadY = canvas.height - cellSize;
+		else
+			newHeadY = currHead.y - cellSize;
+	break;
+	
+	case 'down':
+		newHeadX = currHead.x;
+		if(currHead.y == canvas.height - cellSize)
+			newHeadY = 0;
+		else
+			newHeadY = currHead.y + cellSize;
+	break;
+	
+	case 'left':
+		if(currHead.x == 0)
+			newHeadX = canvas.width - cellSize;
+		else
+			newHeadX = currHead.x - cellSize;
+		newHeadY = currHead.y;
+	break;
+	
+	case 'right':
+		if(currHead.x == canvas.width - cellSize)
+			newHeadX = 0;
+		else
+			newHeadX = currHead.x + cellSize;
+		newHeadY = currHead.y;
+	break;
+	}
+	
+	if (isHit(newHeadX, newHeadY))
+	{	
+		stop = true;
+		//crashaudio.play();
+		//var radius = cellSizeHalf-2;
+		//drawWormCell(context, newHeadX, newHeadY, radius);		
+		//crashAnim(context, newHeadX, newHeadY);
+		//bgaudio.pause();
+		
+		lives--;
+		currLife.innerHTML = lives + '';
+		if(lives == 0)
+		{
+			document.getElementById("playbtn").innerHTML = 'New';
+			alert('Game Over');
+		}
+		else
+		{
+			alert('Crashed');
+			document.getElementById("playbtn").innerHTML = 'Play';
+			initStage(canvas);
+		}
+			
+		//gameOver();
+	}
+	else if(isGrow(newHeadX, newHeadY))
+	{	
+		// grow
+		score = score + POINTS;
+		currScore.innerHTML = score + '';
+		wormCells.unshift( {x: currFoodCell.x, y: currFoodCell.y} );
+		drawWorm(canvas, wormCells);
+		getNextFood(canvas);
+	}
+	else
+	{
+		// add forward head
+		wormCells.unshift( {x: newHeadX, y: newHeadY} );
+		// remove old tail
+		var tailCell = wormCells.pop();
+		drawGridCellVisited(context, tailCell.x, tailCell.y);
+	}
+	
+	//var radius = cellSizeHalf-2;
+	//drawWormCell(context, x, y, radius);
+}
+
+////////////////////////////////////////////////////////////////
+
+function animate(canvas){
+	if(stop == true) return;
+
+    var currTime = (new Date()).getTime();
+    var timeDiff = (currTime - lastUpdated);
+	
+	if(timeDiff > speedRank)
+	{
+		//var context = canvas.getContext("2d");
+
+		// clear
+		//context.clearRect(sprite.dimension.x, sprite.dimension.y,  sprite.dimension.width, sprite.dimension.height);
+	 
+		// update
+		updateWorm(canvas);
+	 
+		// draw
+		drawWorm(canvas);
+	 
+		// request new frame
+		/*requestAnimFrame(function(){
+			animate(canvas, wormCells);
+		});*/
+		
+		lastUpdated = currTime;
+	}
+}
+
+////////////////////////////////////////////////////////////////
+
+function turnLeft()
+{
+	if(direction != 'right')
+	{
+		direction = 'left';		
+	}
+}
+function turnRight()
+{
+	if(direction != 'left')
+	{
+		direction = 'right';
+	}
+}
+function turnUp()
+{
+	if(direction != 'down')
+	{
+		direction = 'up';
+	}
+}
+function turnDown()
+{
+	if(direction != 'up')
+	{
+		direction = 'down';
+	}
+}
+
+document.onkeydown = function(event) {
+	var keyCode; 
+
+	if(event == null)
+	{
+		keyCode = window.event.keyCode; 
+	}
+	else 
+	{
+		keyCode = event.keyCode; 
+	}
+
+	switch(keyCode)
+	{
+	// left
+	case 37:
+	// action when pressing left key
+	if(direction != 'right')
+	{
+		direction = 'left';		
+	}
+	else
+	{
+		wrongturnaudio.play();
+	}
+	break;
+
+	// up
+	case 38:
+	// action when pressing up key
+	if(direction != 'down')
+	{
+		direction = 'up';
+	}
+	else
+	{
+		wrongturnaudio.play();
+	}
+	break;
+
+	// right
+	case 39:
+	// action when pressing right key
+	if(direction != 'left')
+	{
+		direction = 'right';
+	}
+	else
+	{
+		wrongturnaudio.play();
+	}
+	break;
+
+	// down
+	case 40:
+	// action when pressing down key
+	if(direction != 'up')
+	{
+		direction = 'down';
+	}
+	else
+	{
+		wrongturnaudio.play();
+	}
+	break;
+
+	default:
+	break;
+	}
+}
+
+
+function isHit(x, y)
+{
+	for(var i=0; i<wallCells.length; i++)
+		if(wallCells[i].x == x && wallCells[i].y == y)
+		{
+			return true;
+		}
+		
+	for(var i=0; i<wormCells.length; i++)
+		if(wormCells[i].x == x && wormCells[i].y == y)
+		{
+			return true;
+		}
+	
+	return false;
+}
+
+function isGrow(x, y)
+{
+	if(currFoodCell.x == x && currFoodCell.y == y)
+	{
+		//food eaten
+		wrongturnaudio.play();
+		return true;
+	}
+	else
+		return false;
+}
+
+function playpause()
+{
+	var canvas = document.getElementById("myCanvas");
+	var currStr = document.getElementById("playbtn").innerHTML;
+	
+	if(currStr == 'Play')
+	{
+		stop = false;
+		
+		(function animloop(){
+		  requestAnimFrame(animloop);
+		  animate(canvas);
+		})();
+		
+		//.getElementById("playbtn").disabled = true;	
+		document.getElementById("playbtn").innerHTML = 'Pause';
+		//document.getElementById("playbtn").style.backgroundColor = 'orange';
+		bgaudio.play();	
+	}
+	else if(currStr == 'Pause')
+	{
+		stop = true;
+		document.getElementById("playbtn").innerHTML = 'Play';		
+		bgaudio.pause();	
+	}
+	else if(currStr == 'New')
+	{
+		stop = true;
+		document.getElementById("playbtn").innerHTML = 'Play';	
+		initGame();
+		bgaudio.pause();	
+	}
+}
+
+function initStage(canvas)
+{
+	currFoodCount = 0;	
+	currStage.innerHTML = stage + '';
+	direction = 'right';
+	var wcells = [];	
+	for(var i=0; i<wormCellsInitial.length; i++)
+		wcells.push( {x:wormCellsInitial[i].x, y:wormCellsInitial[i].y} );
+	//wormCells = wormCellsInitial;	
+	wormCells = wcells;	
+	
+	switch(stage)
+	{
+	case 1:
+		wallCells = wallcells1;
+		foodCells = foodcells1;
+	break;
+	
+	case 2:
+		wallCells = wallcells2;
+		foodCells = foodcells2;
+	break;
+	
+	case 3:
+		wallCells = wallcells3;
+		foodCells = foodcells3;
+	break;
+	
+	case 4:
+	break;
+	}
+	
+	drawGrid(canvas);
+	drawWalls(canvas, wallCells);		
+	//drawFoods(canvas, foodCells);		
+	drawWorm(canvas, wormCells);
+	getNextFood(canvas);
+	lastUpdated = (new Date()).getTime();
+}
+
+window.onload = function(){
+	
+	initGame();
+    
+};
+
+function initGame()
+{
+	var canvas = document.getElementById("myCanvas");
+	
+	speedRank = 130; // higher value means faster worm
+	lastUpdated;
+	stage= 1;
+	score=0;
+	lives=3;
+	stop = true;
+	currFoodCount = 0;
+	currFoodCell = {x:-1, y:-1};
+	
+	currStage.innerHTML = stage + '';
+	currScore.innerHTML = score + '';
+	currLife.innerHTML = lives + '';
+	
+	initStage(canvas);
+}
+
+
+</script>
+
+
+
+</body>
+</html>
+
+
